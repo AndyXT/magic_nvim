@@ -95,4 +95,7 @@
   :ray-x/guihua.lua {:run "cd lua/fzy && make"}
   ; :ray-x/go.nvim {:mod :go}
   :NvChad/nvterm {:mod :nvterm}
+  :EdenEast/nightfox.nvim {}
   )
+
+(nvim.ex.colorscheme :carbonfox)
