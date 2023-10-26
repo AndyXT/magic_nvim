@@ -1,35 +1,49 @@
--- Welcome to your magic kit!
--- This is the first file Neovim will load.
--- We'll ensure we have a plugin manager and Aniseed.
--- This will allow us to load more Fennel based code and download more plugins.
+-- ~/.config/nvim/plugin/0-tangerine.lua or ~/.config/nvim/init.lua
+vim.cmd("set exrc")	
+vim.cmd("set path+=**")	
+vim.o.shellcmdflag = "-c"
 
--- Make some modules easier to access.
-local execute = vim.api.nvim_command
-local fn = vim.fn
-local fmt = string.format
+local pack = "lazy"
 
--- Work out where our plugins will be stored.
-local pack_path = fn.stdpath("data") .. "/site/pack"
-
-function ensure (user, repo)
-  -- Ensures a given github.com/USER/REPO is cloned in the pack/packer/start directory.
-  local install_path = fmt("%s/packer/start/%s", pack_path, repo, repo)
-  if fn.empty(fn.glob(install_path)) > 0 then
-    execute(fmt("!git clone https://github.com/%s/%s %s", user, repo, install_path))
-    execute(fmt("packadd %s", repo))
-  end
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
 end
+vim.opt.rtp:prepend(lazypath)
 
--- Packer is our plugin manager.
-ensure("wbthomason", "packer.nvim")
+local function bootstrap(url, ref)
+    local name = url:gsub(".*/", "")
+    local path
 
--- Aniseed compiles our Fennel code to Lua and loads it automatically.
-ensure("Olical", "aniseed")
+    if pack == "lazy" then
+        path = vim.fn.stdpath("data") .. "/lazy/" .. name
+        vim.opt.rtp:prepend(path)
+    else
+        path = vim.fn.stdpath("data") .. "/site/pack/".. pack .. "/start/" .. name
+    end
 
--- Enable Aniseed's automatic compilation and loading of Fennel source code.
--- Aniseed looks for this when it's loaded then loads the rest of your
--- configuration if it's set.
-vim.g["aniseed#env"] = {module = "magic.init"}
+    if vim.fn.isdirectory(path) == 0 then
+        print(name .. ": installing in data dir...")
 
--- Now head to fnl/magic/init.fnl to continue your journey.
--- Try pressing gf on the file path to [g]o to the [f]ile.
+        vim.fn.system {"git", "clone", url, path}
+        if ref then
+            vim.fn.system {"git", "-C", path, "checkout", ref}
+        end
+
+        vim.cmd "redraw"
+        print(name .. ": finished installing")
+    end
+end
+bootstrap("https://github.com/Olical/nfnl")
+-- require('nfnl')['compile-all-files']()
+require('init')
+require('options')
+
+vim.cmd([[colorscheme carbonfox]])
